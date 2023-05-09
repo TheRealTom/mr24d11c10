@@ -52,10 +52,6 @@ public:
     {
         // This will be called by App.setup()
     }
-    
-    String bytes_2_string(uint8_t *buff, size_t size){
-        return reinterpret_cast<char*>(buff);
-    }
   
     void extract_data(size_t data_size, uint8_t* output){
         for (size_t i = 0; i < data_size; i++){
@@ -66,21 +62,21 @@ public:
     void send_command(uint8_t *buff, uint8_t data_length) {
         size_t total_size = 5+data_length;
         unsigned char cmd_buff[total_size];
-    
+
         if(cmd_buff == nullptr) {
-          ESP_LOGE("ERROR:", "Can't allocate memory for sending the command");
-          return;
+        ESP_LOGE("ERROR:", "Can't allocate memory for sending the command");
+        return;
         }
-    
+
         cmd_buff[0] = MESSAGE_HEAD;
         cmd_buff[1] = 4 + data_length;
         cmd_buff[2] = 0;
         for (size_t i = 0; i < data_length; i++){
-          cmd_buff[3+i] = buff[i];
+        cmd_buff[3+i] = buff[i];
         }
 
         unsigned short int crc_data = 0x0000;
-        crc_data = us_CalculateCrc16(cmd_buff, 3 + data_length);
+        crc_data = radar::us_CalculateCrc16(cmd_buff, 3 + data_length);
         unsigned short int res = crc_data;
         res &= 0xFF00;
         res = res >> 8;
@@ -89,21 +85,16 @@ public:
         res = crc_data;
         res &= 0x00FF;
         cmd_buff[total_size-1] = res;
-    
+
         ESP_LOGI("Command", "Sending data to the radar");
         uint8_t data_to_send[total_size];
         for (size_t i = 0; i < total_size; i++){
-          ESP_LOGI("LOG:", "0x%02x", cmd_buff[i]);
-          data_to_send[i] = cmd_buff[i];
-        }
-        ESP_LOGI("Command", "Sending data to the radar");
-        for (size_t i = 0; i < total_size; i++){
-          ESP_LOGI("LOG:", "0x%02x", data_to_send[i]);
+        data_to_send[i] = cmd_buff[i];
+        ESP_LOGI("LOG:", "0x%02x", data_to_send[i]);
         }
         ESP_LOGI("Command", "Sending data to the radar END");
 
-        bytes_2_string(data_to_send, total_size);
-        write_array(data_to_send, total_size);
+        write_array(cmd_buff, total_size);
         ESP_LOGI("data_to_send", "Data is sent");
     }
 
